@@ -1,5 +1,45 @@
 import GLib from 'gi://GLib';
 
+export const getAllInterfaces = () => {
+    const interfaces = [];
+
+    try {
+        // Get all network interfaces
+        const command_output_bytes = GLib.spawn_command_line_sync('ip -o link show')[1];
+        const command_output_string = String.fromCharCode.apply(null, command_output_bytes);
+        const lines = command_output_string.split('\n');
+
+        for (let line of lines) {
+            // Parse lines like "2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> ..."
+            const match = line.match(/^\d+:\s+([^:@]+)/);
+            if (match && match[1] !== 'lo') {
+                const ifaceName = match[1].trim();
+
+                // Get IP address for this interface
+                try {
+                    const ip_output_bytes = GLib.spawn_command_line_sync(`ip -4 addr show ${ifaceName}`)[1];
+                    const ip_output_string = String.fromCharCode.apply(null, ip_output_bytes);
+                    const ipRe = new RegExp(/inet ([0-9.]+)\//);
+                    const ipMatches = ip_output_string.match(ipRe);
+
+                    if (ipMatches && ipMatches[1]) {
+                        interfaces.push({
+                            name: ifaceName,
+                            ip: ipMatches[1]
+                        });
+                    }
+                } catch (e) {
+                    // Skip interfaces without IP addresses
+                }
+            }
+        }
+    } catch (e) {
+        // Return empty array on error
+    }
+
+    return interfaces;
+}
+
 export const getLanIp = (interfaceName = '', showInterfaceName = false) => {
     let ipAddress = '';
     let actualInterface = '';
