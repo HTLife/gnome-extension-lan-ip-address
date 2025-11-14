@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="org.gnome.shell.extensions.lan-ip-address" path="/org/gnome/shell/extensions/lan-ip-address/">
+    <key name="interface-name" type="s">
+      <default>''</default>
+      <summary>Network Interface Name</summary>
+      <description>The name of the network interface to display (e.g., eth0, wlan0, enp0s3). Leave empty to auto-detect using default route.</description>
+    </key>
+    <key name="show-interface-name" type="b">
+      <default>false</default>
+      <summary>Show Interface Name</summary>
+      <description>Whether to display the interface name alongside the IP address</description>
+    </key>
+  </schema>
+</schemalist>

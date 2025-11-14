@@ -6,7 +6,7 @@ import * as Utils from './utils.js';
 
 
 export class LanIPAddressIndicator extends PanelMenu.Button {
-    _init() {
+    _init(settings) {
         // Chaining up to the super-class
         super._init(0, "LAN IP Address Indicator", false);
 
@@ -15,6 +15,15 @@ export class LanIPAddressIndicator extends PanelMenu.Button {
             y_align: Clutter.ActorAlign.CENTER
         });
         this.add_child(this.buttonText);
+
+        // Store settings reference
+        this._settings = settings;
+
+        // Connect to settings changes
+        this._settingsChangedId = this._settings.connect('changed', () => {
+            this._updateLabel();
+        });
+
         this._updateLabel();
     }
 
@@ -27,7 +36,12 @@ export class LanIPAddressIndicator extends PanelMenu.Button {
             this._timeout = undefined;
         }
         this._timeout = GLib.timeout_add_seconds(priority, refreshTime, () => { this._updateLabel() });
-        this.buttonText.set_text(Utils.getLanIp());
+
+        // Get settings values
+        const interfaceName = this._settings.get_string('interface-name');
+        const showInterfaceName = this._settings.get_boolean('show-interface-name');
+
+        this.buttonText.set_text(Utils.getLanIp(interfaceName, showInterfaceName));
     }
 
     stop() {
@@ -35,6 +49,13 @@ export class LanIPAddressIndicator extends PanelMenu.Button {
             GLib.source_remove(this._timeout);
         }
         this._timeout = undefined;
+
+        if (this._settingsChangedId) {
+            this._settings.disconnect(this._settingsChangedId);
+            this._settingsChangedId = null;
+        }
+
+        this._settings = null;
         this.menu.removeAll();
     }
 }
