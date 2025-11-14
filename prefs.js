@@ -25,30 +25,33 @@ export default class LanIpAddressPreferences extends ExtensionPreferences {
         // Interface selection row
         const interfaceRow = new Adw.ActionRow({
             title: 'Network Interface',
-            subtitle: 'Select a specific interface or leave empty for auto-detection'
+            subtitle: 'Select a specific interface or use auto-detection'
         });
 
-        const interfaceEntry = new Gtk.Entry({
-            text: settings.get_string('interface-name'),
-            placeholder_text: 'Auto-detect (empty)',
+        const interfaceCombo = new Gtk.ComboBoxText({
             valign: Gtk.Align.CENTER,
-            hexpand: true
         });
 
-        interfaceEntry.connect('changed', (entry) => {
-            settings.set_string('interface-name', entry.get_text());
+        // Add "Auto-detect" as the first option
+        interfaceCombo.append('', 'Auto-detect');
+
+        // Add all available interfaces
+        for (let iface of interfaces) {
+            interfaceCombo.append(iface, iface);
+        }
+
+        // Set the currently selected interface
+        const currentInterface = settings.get_string('interface-name');
+        interfaceCombo.set_active_id(currentInterface);
+
+        interfaceCombo.connect('changed', (combo) => {
+            const selectedId = combo.get_active_id();
+            settings.set_string('interface-name', selectedId || '');
         });
 
-        interfaceRow.add_suffix(interfaceEntry);
-        interfaceRow.activatable_widget = interfaceEntry;
+        interfaceRow.add_suffix(interfaceCombo);
+        interfaceRow.activatable_widget = interfaceCombo;
         group.add(interfaceRow);
-
-        // Available interfaces info row
-        const availableRow = new Adw.ActionRow({
-            title: 'Available Interfaces',
-            subtitle: interfaces.length > 0 ? interfaces.join(', ') : 'None detected'
-        });
-        group.add(availableRow);
 
         // Show interface name toggle
         const showNameRow = new Adw.ActionRow({
